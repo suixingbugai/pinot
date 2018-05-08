@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.linkedin.pinot.common.Utils;
 import com.linkedin.pinot.common.config.IndexingConfig;
 import com.linkedin.pinot.common.config.SegmentsValidationAndRetentionConfig;
 import com.linkedin.pinot.common.config.TableConfig;
@@ -38,7 +37,7 @@ import com.linkedin.pinot.common.metadata.segment.LLCRealtimeSegmentZKMetadata;
 import com.linkedin.pinot.common.metadata.segment.OfflineSegmentZKMetadata;
 import com.linkedin.pinot.common.metadata.segment.RealtimeSegmentZKMetadata;
 import com.linkedin.pinot.common.metadata.segment.SegmentZKMetadata;
-import com.linkedin.pinot.core.realtime.stream.StreamMetadata;
+import com.linkedin.pinot.common.partition.PartitionAssignment;
 import com.linkedin.pinot.common.partition.ReplicaGroupPartitionAssignment;
 import com.linkedin.pinot.common.partition.ReplicaGroupPartitionAssignmentGenerator;
 import com.linkedin.pinot.common.segment.SegmentMetadata;
@@ -55,7 +54,6 @@ import com.linkedin.pinot.common.utils.retry.RetryPolicies;
 import com.linkedin.pinot.common.utils.retry.RetryPolicy;
 import com.linkedin.pinot.controller.ControllerConf;
 import com.linkedin.pinot.controller.api.pojos.Instance;
-import com.linkedin.pinot.common.partition.PartitionAssignment;
 import com.linkedin.pinot.controller.helix.core.PinotResourceManagerResponse.ResponseStatus;
 import com.linkedin.pinot.controller.helix.core.realtime.PinotLLCRealtimeSegmentManager;
 import com.linkedin.pinot.controller.helix.core.rebalance.RebalanceSegmentStrategy;
@@ -66,6 +64,7 @@ import com.linkedin.pinot.controller.helix.core.sharding.SegmentAssignmentStrate
 import com.linkedin.pinot.controller.helix.core.util.HelixSetupUtils;
 import com.linkedin.pinot.controller.helix.core.util.ZKMetadataUtils;
 import com.linkedin.pinot.controller.helix.starter.HelixConfig;
+import com.linkedin.pinot.core.realtime.stream.StreamMetadata;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1425,7 +1424,7 @@ public class PinotHelixResourceManager {
     return instanceSet;
   }
 
-  public void addNewSegment(@Nonnull SegmentMetadata segmentMetadata, @Nonnull String downloadUrl) {
+  public void addNewSegment(@Nonnull SegmentMetadata segmentMetadata, @Nonnull String downloadUrl, String segmentVersionUUID) {
     String segmentName = segmentMetadata.getName();
     String offlineTableName = TableNameBuilder.OFFLINE.tableNameWithType(segmentMetadata.getTableName());
 
@@ -1435,6 +1434,8 @@ public class PinotHelixResourceManager {
     offlineSegmentZKMetadata = ZKMetadataUtils.updateSegmentMetadata(offlineSegmentZKMetadata, segmentMetadata);
     offlineSegmentZKMetadata.setDownloadUrl(downloadUrl);
     offlineSegmentZKMetadata.setPushTime(System.currentTimeMillis());
+    // Sets the segment version UUID to uniquely identify the segment
+    offlineSegmentZKMetadata.setSegmentVersionUUID(segmentVersionUUID);
     if (!ZKMetadataProvider.setOfflineSegmentZKMetadata(_propertyStore, offlineSegmentZKMetadata)) {
       throw new RuntimeException(
           "Failed to set segment ZK metadata for table: " + offlineTableName + ", segment: " + segmentName);
@@ -1443,6 +1444,10 @@ public class PinotHelixResourceManager {
 
     addNewOfflineSegment(segmentMetadata);
     LOGGER.info("Added segment: {} of table: {} to ideal state", segmentName, offlineTableName);
+  }
+
+  public void addNewSegment(@Nonnull SegmentMetadata segmentMetadata, @Nonnull String downloadUrl) {
+    addNewSegment(segmentMetadata, downloadUrl, null);
   }
 
   public ZNRecord getSegmentMetadataZnRecord(String tableNameWithType, String segmentName) {
@@ -1460,6 +1465,11 @@ public class PinotHelixResourceManager {
 
   public void refreshSegment(@Nonnull SegmentMetadata segmentMetadata,
       @Nonnull OfflineSegmentZKMetadata offlineSegmentZKMetadata, @Nonnull String downloadUrl) {
+    refreshSegment(segmentMetadata, offlineSegmentZKMetadata, downloadUrl, null);
+  }
+
+  public void refreshSegment(@Nonnull SegmentMetadata segmentMetadata,
+      @Nonnull OfflineSegmentZKMetadata offlineSegmentZKMetadata, @Nonnull String downloadUrl, String segmentVersionUUID) {
     String offlineTableName = TableNameBuilder.OFFLINE.tableNameWithType(segmentMetadata.getTableName());
     String segmentName = segmentMetadata.getName();
 
@@ -1469,6 +1479,8 @@ public class PinotHelixResourceManager {
     offlineSegmentZKMetadata = ZKMetadataUtils.updateSegmentMetadata(offlineSegmentZKMetadata, segmentMetadata);
     offlineSegmentZKMetadata.setDownloadUrl(downloadUrl);
     offlineSegmentZKMetadata.setRefreshTime(System.currentTimeMillis());
+    // Sets the segment version UUID to uniquely identify the segment
+    offlineSegmentZKMetadata.setSegmentVersionUUID(segmentVersionUUID);
     if (!ZKMetadataProvider.setOfflineSegmentZKMetadata(_propertyStore, offlineSegmentZKMetadata)) {
       throw new RuntimeException(
           "Failed to update ZK metadata for segment: " + segmentName + " of table: " + offlineTableName);

@@ -56,6 +56,12 @@ public class ControllerConf extends PropertiesConfiguration {
   // protection is enabled. If the upload does not finish within the timeout, next upload can override the previous one.
   private static final String SEGMENT_UPLOAD_TIMEOUT_IN_MILLIS = "controller.segment.upload.timeoutInMillis";
 
+  // Storage Parameters
+  // This parameter allows users to configure the base directory where all pinot segments will be stored
+  private static final String STORAGE_DIR = "controller.storage.dir";
+  // Defines the kind of storage and the underlying PinotFS implementation; each storage type will have a different factory class
+  private static final String PINOT_FS_FACTORY_CLASS = "controller.storage.factory.class";
+
   private static final int DEFAULT_RETENTION_CONTROLLER_FREQUENCY_IN_SECONDS = 6 * 60 * 60; // 6 Hours.
   private static final int DEFAULT_VALIDATION_CONTROLLER_FREQUENCY_IN_SECONDS = 60 * 60; // 1 Hour.
   private static final int DEFAULT_STATUS_CONTROLLER_FREQUENCY_IN_SECONDS = 5 * 60; // 5 minutes
@@ -72,6 +78,11 @@ public class ControllerConf extends PropertiesConfiguration {
       "com.linkedin.pinot.controller.api.access.AllowAllAccessFactory";
   private static final long DEFAULT_SEGMENT_UPLOAD_TIMEOUT_IN_MILLIS = 600_000L; // 10 minutes
 
+  // Default Storage Parameters
+  // Current default for pinot fs is local implementation
+  private static final String DEFAULT_PINOT_FS_FACTORY_CLASS =
+      "com.linkedin.pinot.controller.api.storage.LocalPinotFSFactory";
+
   public ControllerConf(File file) throws ConfigurationException {
     super(file);
   }
@@ -87,6 +98,14 @@ public class ControllerConf extends PropertiesConfiguration {
       // Shouldn't happen
       throw new AssertionError("UTF-8 encoding should always be supported", e);
     }
+  }
+
+  public void setPinotStorageDir(String dir) {
+    setProperty(STORAGE_DIR, dir);
+  }
+
+  public void setPinotFSFactoryClass(String pinotFSFactoryClass) {
+    setProperty(PINOT_FS_FACTORY_CLASS, pinotFSFactoryClass);
   }
 
   public void setSplitCommit(boolean isSplitCommit) {
@@ -207,6 +226,14 @@ public class ControllerConf extends PropertiesConfiguration {
   @Override
   public String toString() {
     return super.toString();
+  }
+
+  public String getPinotStorageDir() {
+    return getString(STORAGE_DIR, null);
+  }
+
+  public String getPinotFSFactoryClass() {
+    return getString(PINOT_FS_FACTORY_CLASS, DEFAULT_PINOT_FS_FACTORY_CLASS);
   }
 
   public boolean getAcceptSplitCommit() {

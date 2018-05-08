@@ -53,6 +53,7 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
   private SegmentPartitionMetadata _partitionMetadata;
   private long _segmentUploadStartTime = -1;
   private Map<String, String> _customMap;
+  private String _segmentVersionUUID;
 
   public SegmentZKMetadata() {
   }
@@ -84,6 +85,7 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
     }
     _segmentUploadStartTime = znRecord.getLongField(CommonConstants.Segment.SEGMENT_UPLOAD_START_TIME, -1);
     _customMap = znRecord.getMapField(CommonConstants.Segment.CUSTOM_MAP);
+    _segmentVersionUUID = znRecord.getSimpleField(CommonConstants.Segment.SEGMENT_VERSION_UUID);
   }
 
   public String getSegmentName() {
@@ -206,6 +208,14 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
     _customMap = customMap;
   }
 
+  public String getSegmentVersionUUID() {
+    return _segmentVersionUUID;
+  }
+
+  public void setSegmentVersionUUID(String segmentVersionUUID) {
+    _segmentVersionUUID = segmentVersionUUID;
+  }
+
   @Override
   public boolean equals(Object segmentMetadata) {
     if (isSameReference(this, segmentMetadata)) {
@@ -222,7 +232,8 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
         metadata._startTime) && isEqual(_endTime, metadata._endTime) && isEqual(_segmentType, metadata._segmentType)
         && isEqual(_totalRawDocs, metadata._totalRawDocs) && isEqual(_crc, metadata._crc) && isEqual(_creationTime,
         metadata._creationTime) && isEqual(_partitionMetadata, metadata._partitionMetadata) && isEqual(
-        _segmentUploadStartTime, metadata._segmentUploadStartTime) && isEqual(_customMap, metadata._customMap);
+        _segmentUploadStartTime, metadata._segmentUploadStartTime) && isEqual(_customMap, metadata._customMap) && isEqual(
+        _segmentVersionUUID, metadata._segmentVersionUUID);
   }
 
   @Override
@@ -240,6 +251,7 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
     result = hashCodeOf(result, _partitionMetadata);
     result = hashCodeOf(result, _segmentUploadStartTime);
     result = hashCodeOf(result, _customMap);
+    result = hashCodeOf(result, _segmentVersionUUID);
     return result;
   }
 
@@ -277,6 +289,9 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
     }
     if (_customMap != null) {
       znRecord.setMapField(CommonConstants.Segment.CUSTOM_MAP, _customMap);
+    }
+    if (_segmentVersionUUID != null) {
+      znRecord.setSimpleField(CommonConstants.Segment.SEGMENT_VERSION_UUID, _segmentVersionUUID);
     }
     return znRecord;
   }
@@ -320,6 +335,8 @@ public abstract class SegmentZKMetadata implements ZKMetadata {
       JSONObject jsonObject = new JSONObject(_customMap);
       configMap.put(CommonConstants.Segment.CUSTOM_MAP, jsonObject.toString());
     }
+
+    configMap.put(CommonConstants.Segment.SEGMENT_VERSION_UUID, _segmentVersionUUID);
 
     return configMap;
   }

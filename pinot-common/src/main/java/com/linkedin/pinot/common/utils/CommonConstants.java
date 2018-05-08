@@ -323,6 +323,11 @@ public class CommonConstants {
 
     public static final String CUSTOM_MAP = "custom.map";
 
+    /**
+     * This field will uniquely identify the version of the segment with a random UUID.
+     */
+    public static final String SEGMENT_VERSION_UUID = "segment.version.uuid";
+
     public static final String SEGMENT_BACKUP_DIR_SUFFIX = ".segment.bak";
     public static final String SEGMENT_TEMP_DIR_SUFFIX = ".segment.tmp";
 
