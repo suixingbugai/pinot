@@ -1,8 +1,6 @@
 package com.linkedin.pinot.controller.api.storage;
 
-import com.linkedin.pinot.common.config.TableConfig;
 import com.linkedin.pinot.common.config.TableNameBuilder;
-import com.linkedin.pinot.common.metadata.ZKMetadataProvider;
 import com.linkedin.pinot.common.metadata.segment.OfflineSegmentZKMetadata;
 import com.linkedin.pinot.common.metadata.segment.SegmentZKMetadataCustomMapModifier;
 import com.linkedin.pinot.common.metrics.ControllerMeter;
@@ -60,7 +58,7 @@ public class PinotSegmentUploadUtils {
   PinotFSFactory _pinotFSFactory;
 
   /**
-   * Updates zk metadata and allows segment to start serving queries
+   * Updates zk metadata for uploaded segments
    * @param segmentMetadata
    * @param dstUri final uploaded location of the segment
    * @param segmentUploaderConfig
@@ -137,6 +135,13 @@ public class PinotSegmentUploadUtils {
     }
   }
 
+  /**
+   * Copies segment from given segmentURI to a final Pinot location.
+   * @param segmentMetadata
+   * @param segmentUri
+   * @param segmentUploaderConfig
+   * @return
+   */
   public SuccessResponse push(SegmentMetadata segmentMetadata, URI segmentUri, SegmentUploaderConfig segmentUploaderConfig) {
     // Log information about the incoming segment
     logIncomingSegmentInformation(segmentUploaderConfig.getHeaders());
@@ -151,8 +156,6 @@ public class PinotSegmentUploadUtils {
       throw new ControllerApplicationException(LOGGER,
           "Invalid segment start/end time for segment: " + segmentName + " of table: " + tableName, Response.Status.NOT_ACCEPTABLE);
     }
-
-    checkQuota(segmentMetadata, getTableNameWithType(segmentName, tableName));
 
     // Constructs permanent home of segment with a unique UUID. We will keep all versions of segments uploaded.
     URI dstUri = PinotStorageUtils.constructSegmentLocation(storageDirectory, segmentMetadata);
@@ -176,18 +179,6 @@ public class PinotSegmentUploadUtils {
     }
 
     return new SuccessResponse("Successfully uploaded segment: " + segmentName + " of table: " + tableName);
-  }
-
-  private void checkQuota(SegmentMetadata segmentMetadata, String tableNameWithType) {
-    TableConfig tableConfig =
-        ZKMetadataProvider.getTableConfig(_pinotHelixResourceManager.getPropertyStore(), tableNameWithType);
-
-    if (tableConfig == null) {
-      throw new ControllerApplicationException(LOGGER, "Failed to find table config for table: " + tableNameWithType,
-          Response.Status.NOT_FOUND);
-    }
-
-    // TODO: Add quota check
   }
 
   private void logIncomingSegmentInformation(HttpHeaders headers) {
