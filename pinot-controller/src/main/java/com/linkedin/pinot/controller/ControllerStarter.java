@@ -64,6 +64,7 @@ public class ControllerStarter {
   private static final Long DATA_DIRECTORY_MISSING_VALUE = 1000000L;
   private static final Long DATA_DIRECTORY_EXCEPTION_VALUE = 1100000L;
   private static final String METADATA_EVENT_NOTIFIER_PREFIX = "metadata.event.notifier";
+  private static final String STORAGE_PREFIX = "storage";
 
   private final ControllerConf _config;
   private final ControllerAdminApiApplication _adminApp;
@@ -178,14 +179,7 @@ public class ControllerStarter {
       throw new RuntimeException("Caught exception while creating new AccessControlFactory instance", e);
     }
 
-    String pinotFSFactoryClass = _config.getPinotFSFactoryClass();
-    LOGGER.info("Use class: {} as the PinotFSFactory", pinotFSFactoryClass);
-    final PinotFSFactory pinotFSFactory;
-    try {
-      pinotFSFactory = (PinotFSFactory) Class.forName(pinotFSFactoryClass).newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException("Caught exception while creating new PinotFSFactory instance", e);
-    }
+    final PinotFSFactory pinotFSFactory = PinotFSFactory.loadFactory(_config.subset(STORAGE_PREFIX));
 
     final MetadataEventNotifierFactory metadataEventNotifierFactory =
         MetadataEventNotifierFactory.loadFactory(_config.subset(METADATA_EVENT_NOTIFIER_PREFIX));

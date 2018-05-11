@@ -2,12 +2,17 @@ package com.linkedin.pinot.integration.tests;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import com.linkedin.pinot.common.segment.SegmentMetadata;
+import com.linkedin.pinot.controller.ControllerConf;
+import com.linkedin.pinot.controller.api.storage.LocalPinotFSFactory;
+import com.linkedin.pinot.controller.api.storage.PinotFSFactory;
 import com.linkedin.pinot.controller.api.storage.PinotSegmentUploadUtils;
 import com.linkedin.pinot.controller.api.storage.SegmentUploaderConfig;
 import com.linkedin.pinot.core.indexsegment.generator.SegmentVersion;
 import com.linkedin.pinot.core.segment.index.SegmentMetadataImpl;
 import com.linkedin.pinot.util.TestUtils;
 import java.io.File;
+import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -279,6 +284,18 @@ public class PinotSegmentUploadIntegrationTest extends BaseClusterIntegrationTes
 
     PinotSegmentUploadUtils pinotSegmentUploadUtils = new PinotSegmentUploadUtils();
 
+    // Inject by reflection all needed parameters
+    PinotFSFactory pinotFSFactory = new LocalPinotFSFactory();
+    Field field = pinotSegmentUploadUtils.getClass().getDeclaredField("_pinotFSFactory");
+    field.setAccessible(true);
+    field.set(pinotSegmentUploadUtils, pinotFSFactory);
+
+    ControllerConf controllerConf = new ControllerConf();
+    controllerConf.setPinotStorageDir(URLEncoder.encode(_controllerDataDir, "UTF-8"));
+    Field field2 = pinotSegmentUploadUtils.getClass().getDeclaredField("_controllerConf");
+    field2.setAccessible(true);
+    field2.set(pinotSegmentUploadUtils, controllerConf);
+
     String[] unzippedSegments = _segmentDir.list();
     for (String segmentName : unzippedSegments) {
       File file = new File(_segmentDir, segmentName);
@@ -286,7 +303,7 @@ public class PinotSegmentUploadIntegrationTest extends BaseClusterIntegrationTes
       File segmentIndexFile = refreshSegmentPath.listFiles()[0];
       SegmentMetadata segmentMetadata = new SegmentMetadataImpl(segmentIndexFile);
       SegmentUploaderConfig segmentUploaderConfig = new SegmentUploaderConfig.Builder().setHeaders(null).setRequest(null).build();
-      pinotSegmentUploadUtils.push(segmentMetadata, file.toURI(), segmentUploaderConfig);
+      pinotSegmentUploadUtils.push(segmentMetadata, segmentIndexFile.getPath(), segmentUploaderConfig);
     }
   }
 }

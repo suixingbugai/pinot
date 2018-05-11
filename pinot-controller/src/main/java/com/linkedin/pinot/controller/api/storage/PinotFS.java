@@ -15,7 +15,6 @@
  */
 package com.linkedin.pinot.controller.api.storage;
 
-import java.net.URI;
 import org.apache.commons.configuration.Configuration;
 
 /**
@@ -31,69 +30,69 @@ public interface PinotFS {
   void init(Configuration config);
 
   /**
-   * Deletes the file at the uri provided
-   * @param uri
+   * Deletes the file at the location provided
+   * @param location
    * @return
    * @throws Exception
    */
-  boolean delete(URI uri) throws Exception;
+  boolean delete(String location) throws Exception;
 
   /**
-   * Moves the file from the srcUri to the dstUri. Does not keep the original file. If the dstUri has parent directories
+   * Moves the file from the src to dst. Does not keep the original file. If the dst has parent directories
    * that haven't been created, this method will create all the necessary parent directories.
-   * @param srcUri
-   * @param dstUri
+   * @param src
+   * @param dst
    * @return
    * @throws Exception
    */
-  boolean move(URI srcUri, URI dstUri) throws Exception;
+  boolean move(String src, String dst) throws Exception;
 
   /**
-   * Copies a file from srcUri to dstUri. Keeps the original file. If the dstUri has parent directories that haven't
+   * Copies a file from src to dst. Keeps the original file. If the dst has parent directories that haven't
    * been created, this method will create all the necessary parent directories.
-   * @param srcUri
-   * @param dstUri
+   * @param src
+   * @param dst
    * @return
    * @throws Exception
    */
-  boolean copy(URI srcUri, URI dstUri) throws Exception;
+  boolean copy(String src, String dst) throws Exception;
 
   /**
-   * Checks whether the file at the provided uri exists.
-   * @param uri
+   * Checks whether the file at the provided location exists.
+   * @param location
    * @return
    */
-  boolean exists(URI uri);
+  boolean exists(String location);
 
   /**
-   * Returns the length of the file at the provided uri.
-   * @param uri
+   * Returns the length of the file at the provided location.
+   * @param location
    * @return
    */
-  long length(URI uri);
+  long length(String location);
 
   /**
-   * Lists all the files at the URI provided. Returns null if this abstract pathname does not denote a directory, or if
+   * Lists all the files at the location provided. Returns null if this abstract pathname does not denote a directory, or if
    * an I/O error occurs.
-   * @param uri
+   * @param location
    * @return
    */
-  String[] listFiles(URI uri);
+  String[] listFiles(String location);
 
   /**
    * Returns the abstract pathname of this abstract pathname's parent, or null if this pathname does not name a parent
    * directory. The parent consists of the pathname's prefix, if any, and each name in the pathname's name sequence
    * except for the last. If the name sequence is empty, then the pathname does not name a parent directory.
-   * @param uri
+   * @param location
    * @return
    */
-  String getParentFile(URI uri);
+  String getParentFile(String location);
 
   /**
    * Returns the name of the file or directory denoted by this abstract pathname. This is just the last name in the
    * pathname's name sequence. If the pathname's name sequence is empty, then the empty string is returned.
-   * @param uri
+   * @param location
    * @return
    */
-  String getName(URI uri);
+  String getName(String location);
 }

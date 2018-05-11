@@ -30,7 +30,6 @@ import com.linkedin.pinot.controller.api.access.AccessControlFactory;
 import com.linkedin.pinot.controller.api.resources.ControllerApplicationException;
 import com.linkedin.pinot.controller.api.resources.SuccessResponse;
 import com.linkedin.pinot.controller.helix.core.PinotHelixResourceManager;
-import java.net.URI;
 import java.util.Date;
 import java.util.concurrent.Executor;
 import javax.inject.Inject;
@@ -78,7 +77,7 @@ public class PinotSegmentUploadUtils {
    * @param dstUri final uploaded location of the segment
    * @param segmentUploaderConfig
    */
-  public void pushMetadata(SegmentMetadata segmentMetadata, URI dstUri, SegmentUploaderConfig segmentUploaderConfig)
+  public void pushMetadata(SegmentMetadata segmentMetadata, String dstUri, SegmentUploaderConfig segmentUploaderConfig)
       throws JSONException {
     PinotFS pinotFS = createPinotFS();
     HttpHeaders headers = segmentUploaderConfig.getHeaders();
@@ -153,11 +152,11 @@ public class PinotSegmentUploadUtils {
   /**
    * Copies segment from given segmentURI to a final Pinot location.
    * @param segmentMetadata
-   * @param segmentUri
+   * @param segmentStr
    * @param segmentUploaderConfig
    * @return
    */
-  public SuccessResponse push(SegmentMetadata segmentMetadata, URI segmentUri, SegmentUploaderConfig segmentUploaderConfig) {
+  public SuccessResponse push(SegmentMetadata segmentMetadata, String segmentStr, SegmentUploaderConfig segmentUploaderConfig) {
     // Log information about the incoming segment
     logIncomingSegmentInformation(segmentUploaderConfig.getHeaders());
 
@@ -173,18 +172,18 @@ public class PinotSegmentUploadUtils {
     }
 
     // Constructs permanent home of segment with a unique UUID. We will keep all versions of segments uploaded.
-    URI dstUri = PinotStorageUtils.constructSegmentLocation(storageDirectory, segmentMetadata);
+    String dstStr = PinotStorageUtils.constructSegmentLocation(storageDirectory, segmentMetadata);
 
     try {
       // Move segment to permanent directory
-      pinotFS.copy(segmentUri, dstUri);
+      pinotFS.copy(segmentStr, dstStr);
     } catch (Exception e) {
-      throw new RuntimeException("Could not construct destination URI");
+      throw new RuntimeException("Could not copy segment: " + segmentStr + " to dst: " + dstStr, e);
     }
 
     try {
       // Update zk segment metadata
-      pushMetadata(segmentMetadata, dstUri, segmentUploaderConfig);
+      pushMetadata(segmentMetadata, dstStr, segmentUploaderConfig);
     } catch (WebApplicationException e) {
       throw e;
     } catch (Exception e) {
@@ -245,13 +244,13 @@ public class PinotSegmentUploadUtils {
     }
   }
 
-  private String getSegmentVersionUUID(URI segmentUri, PinotFS pinotFS) {
+  private String getSegmentVersionUUID(String segmentLocation, PinotFS pinotFS) {
     try {
-      URI parentURI = new URI(pinotFS.getParentFile(segmentUri));
+      String parentURI =pinotFS.getParentFile(segmentLocation);
       return pinotFS.getName(parentURI);
     } catch (Exception e) {
       LOGGER.error("Could not retrieve parent URI");
-      throw new ControllerApplicationException(LOGGER, "Invalid segment location for segment: " + segmentUri, Response.Status.BAD_REQUEST);
+      throw new ControllerApplicationException(LOGGER, "Invalid segment location for segment: " + segmentLocation, Response.Status.BAD_REQUEST);
     }
   }
 
