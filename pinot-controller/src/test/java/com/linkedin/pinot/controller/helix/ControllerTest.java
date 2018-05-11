@@ -100,6 +100,7 @@ public abstract class ControllerTest {
     config.setControllerPort(Integer.toString(DEFAULT_CONTROLLER_PORT));
     config.setDataDir(DEFAULT_DATA_DIR);
     config.setZkStr(ZkStarter.DEFAULT_ZK_STR);
+    config.setPinotStorageDir(DEFAULT_DATA_DIR);
     return config;
   }
 
