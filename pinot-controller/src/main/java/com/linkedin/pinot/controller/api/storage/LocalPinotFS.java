@@ -16,9 +16,8 @@
 package com.linkedin.pinot.controller.api.storage;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.FileUtils;
 
 
 /**
@@ -34,17 +33,31 @@ public class LocalPinotFS implements PinotFS {
 
   public boolean delete(String location) throws Exception {
     File file = new File(location);
+    if (file.isDirectory()) {
+      FileUtils.deleteDirectory(file);
+      return true;
+    }
     return file.delete();
   }
 
   public boolean move(String src, String dst) throws Exception {
-    Files.move(Paths.get(src.toString()), Paths.get(dst.toString()));
-    return true;
+    File srcFile = new File(src);
+    File dstFile = new File(dst);
+    dstFile.getParentFile().mkdirs();
+    if (srcFile.renameTo(dstFile) && srcFile.delete()) {
+      return true;
+    }
+    return false;
   }
 
   public boolean copy(String src, String dst) throws Exception {
-    Files.copy(Paths.get(src.toString()), Paths.get(dst.toString()));
-    return true;
+    File srcFile = new File(src);
+    File dstFile = new File(dst);
+    dstFile.getParentFile().mkdirs();
+    if (srcFile.renameTo(dstFile)) {
+      return true;
+    }
+    return false;
   }
 
   public boolean exists(String location) {

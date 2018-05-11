@@ -26,17 +26,14 @@ import com.linkedin.pinot.common.utils.FileUploadDownloadClient;
 import com.linkedin.pinot.common.utils.SegmentName;
 import com.linkedin.pinot.common.utils.time.TimeUtils;
 import com.linkedin.pinot.controller.ControllerConf;
-import com.linkedin.pinot.controller.api.access.AccessControlFactory;
 import com.linkedin.pinot.controller.api.resources.ControllerApplicationException;
 import com.linkedin.pinot.controller.api.resources.SuccessResponse;
 import com.linkedin.pinot.controller.helix.core.PinotHelixResourceManager;
 import java.util.Date;
-import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.helix.ZNRecord;
 import org.joda.time.Interval;
 import org.json.JSONException;
@@ -58,15 +55,6 @@ public class PinotSegmentUploadUtils {
 
   @Inject
   ControllerMetrics _controllerMetrics;
-
-  @Inject
-  HttpConnectionManager _connectionManager;
-
-  @Inject
-  Executor _executor;
-
-  @Inject
-  AccessControlFactory _accessControlFactory;
 
   @Inject
   PinotFSFactory _pinotFSFactory;
